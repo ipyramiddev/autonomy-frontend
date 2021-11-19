@@ -1,5 +1,7 @@
 # Autonomy Network Frontend Defi Dapp Engineer Assessment Result
 
+![Project Screenshot](public/runtime.png)
+
 ## Problem description
 
 - https://github.com/Autonomy-Network/frontend-challenge
