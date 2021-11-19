@@ -141,3 +141,9 @@ if (window.ethereum) {
 - `npm start`
 
 Check out `http://localhost:3000` on your browser.
+
+## Result transactions
+
+- https://ropsten.etherscan.io/tx/0x8c3228ca37f24c3b4925b2a061ebf9ab7404ff455a4905d4abdffeb9bbefae95
+- https://ropsten.etherscan.io/tx/0x1f8bfb47bccee5477850344d6f0079177d78a0ff95c16ecd3672f7222e1e2463
+- https://ropsten.etherscan.io/tx/0x43e9a8d82373ca523f9eb0585fe61d229192e8f6e87ecb7a12ea97c89775efef
