@@ -1,70 +1,143 @@
-# Getting Started with Create React App
+# Autonomy Network Frontend Defi Dapp Engineer Assessment Result
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+## Problem description
 
-## Available Scripts
+- https://github.com/Autonomy-Network/frontend-challenge
 
-In the project directory, you can run:
+## My solution
 
-### `yarn start`
+### Create Project with creat react app
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in the browser.
+```
+npx create-react-app my-app
+cd my-app
+npm start
+```
 
-The page will reload if you make edits.\
-You will also see any lint errors in the console.
+### Used Theme
 
-### `yarn test`
+- Material-UI
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+### Get metamask wallet address && switch network to Ropsten testnet
 
-### `yarn build`
+- Connect to metamask
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+```js
+if (window.ethereum) {
+  //check if Metamask is installed
+  try {
+    //connect to site
+    const address = await window.ethereum.enable(); //connect Metamask
+    const obj = {
+      connectedStatus: true,
+      status: "",
+      address: address,
+    };
+    console.log(address);
+    setSender(address[0]);
+    return obj;
+  } catch (error) {
+    return {
+      connectedStatus: false,
+      status: "🦊 Connect to Metamask using the button on the top right.",
+    };
+  }
+} else {
+  return {
+    connectedStatus: false,
+    status:
+      "🦊 You must install Metamask into your browser: https://metamask.io/download.html",
+  };
+}
+```
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+- Switch to Ropsten Network
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+```js
+if (window.ethereum) {
+  try {
+    await window.ethereum.request({
+      method: "wallet_switchEthereumChain",
+      params: [{ chainId: "0x3" }],
+    });
+  } catch (switchError) {
+    // This error code indicates that the chain has not been added to MetaMask.
+    if (switchError.code === 4902) {
+      try {
+        await window.ethereum.request({
+          method: "wallet_addEthereumChain",
+          params: [
+            {
+              chainId: "0x03",
+              rpcUrl:
+                "https://ropsten.infura.io/v3/9aa3d95b3bc440fa88ea12eaa4456161" /* ... */,
+            },
+          ],
+        });
+      } catch (addError) {
+        // handle "add" error
+      }
+    }
+    // handle other "switch" errors
+  }
+} else {
+  return {
+    connectedStatus: false,
+    status:
+      "🦊 You must install Metamask into your browser: https://metamask.io/download.html",
+  };
+}
+```
 
-### `yarn eject`
+### Send transaction
 
-**Note: this is a one-way operation. Once you `eject`, you can’t go back!**
+- Create smart contract object using `web3.js` npm module, contract abis and `window.ethereum` object.
+- Send transaction by calling `newReq` method of `Autonomy` contract deployed on Ropsten.
 
-If you aren’t satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+```js
+if (window.ethereum) {
+  var web3 = new Web3(window.ethereum);
+  var ethSenderContract = new web3.eth.Contract(
+    ethSenderABI,
+    ethSenderContractAddress
+  );
+  var newReqContract = new web3.eth.Contract(newReqABI, newReqContractAddress);
+  var time = min * 60;
+  console.log();
+  var callData = ethSenderContract.methods
+    .sendEthAtTime(time, sender)
+    .encodeABI();
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you’re on your own.
+  // using the event emitter
+  newReqContract.methods
+    .newReq(
+      target,
+      referer,
+      callData,
+      ethForCall,
+      verifyUser,
+      insertFeeAmount,
+      payWithAUTO
+    )
+    .send({ from: sender })
+    .on("transactionHash", function (hash) {})
+    .on("confirmation", function (confirmationNumber, receipt) {})
+    .on("receipt", function (receipt) {
+      console.log("receipt", receipt);
+      window.alert("NewReq method successfully called");
+    })
+    .on("error", function (error, receipt) {
+      // If the transaction was rejected by the network with a receipt, the second parameter will be the receipt.
+      window.alert("Error: ", error);
+    });
+} else {
+  window.alert("You have to install Metamask!!!");
+}
+```
 
-You don’t have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn’t feel obligated to use this feature. However we understand that this tool wouldn’t be useful if you couldn’t customize it when you are ready for it.
+## How to run
 
-## Learn More
+- `npm install`
+- `npm start`
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
-
-To learn React, check out the [React documentation](https://reactjs.org/).
-
-### Code Splitting
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
-
-### Analyzing the Bundle Size
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
-
-### Making a Progressive Web App
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
-
-### Advanced Configuration
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
-
-### Deployment
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
-
-### `yarn build` fails to minify
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+Check out `http://localhost:3000` on your browser.

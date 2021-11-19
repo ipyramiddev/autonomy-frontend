@@ -139,6 +139,7 @@ function App() {
           window.alert("Error: ", error);
         });
     } else {
+      window.alert("You have to install Metamask!!!");
     }
   };
 
