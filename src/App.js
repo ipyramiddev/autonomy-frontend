@@ -7,6 +7,7 @@ import {
   Typography,
   Grid,
   IconButton,
+  Paper,
 } from "@material-ui/core";
 import Metamask from "./components/Metamask";
 import useStyles from "./style";
@@ -16,7 +17,6 @@ import Web3 from "web3";
 
 const target = "0xfa0a8b60B2AF537DeC9832f72FD233e93E4C8463";
 const referer = "0x0000000000000000000000000000000000000000";
-const ethForCall = 0;
 const verifyUser = false;
 const insertFeeAmount = false;
 const payWithAUTO = false;
@@ -28,9 +28,11 @@ function App() {
   const classes = useStyles();
   const [sender, setSender] = React.useState("");
   const [min, setMin] = React.useState(0);
+  const [ethForCall, setEtherForCall] = React.useState(0);
+  const [success, setSuccess] = React.useState(false);
+  const [msg, setMsg] = React.useState("");
 
   const handleChangeTime = (min) => {
-    console.log("min: ", min);
     setMin(min);
   };
 
@@ -45,8 +47,8 @@ function App() {
           status: "",
           address: address,
         };
-        console.log(address);
         setSender(address[0]);
+        setMsg("");
         return obj;
       } catch (error) {
         return {
@@ -100,6 +102,7 @@ function App() {
   };
 
   const handleSendNewReq = async () => {
+    setMsg("");
     if (window.ethereum) {
       var web3 = new Web3(window.ethereum);
       var ethSenderContract = new web3.eth.Contract(
@@ -111,44 +114,61 @@ function App() {
         newReqContractAddress
       );
       var time = min * 60;
-      console.log();
-      var callData = ethSenderContract.methods
-        .sendEthAtTime(time, sender)
-        .encodeABI();
 
-      // using the event emitter
-      newReqContract.methods
-        .newReq(
-          target,
-          referer,
-          callData,
-          ethForCall,
-          verifyUser,
-          insertFeeAmount,
-          payWithAUTO
-        )
-        .send({ from: sender })
-        .on("transactionHash", function (hash) {})
-        .on("confirmation", function (confirmationNumber, receipt) {})
-        .on("receipt", function (receipt) {
-          console.log("receipt", receipt);
-          window.alert("NewReq method successfully called");
-        })
-        .on("error", function (error, receipt) {
-          // If the transaction was rejected by the network with a receipt, the second parameter will be the receipt.
-          window.alert("Error: ", error);
-        });
+      if (sender === "" || !web3.utils.isAddress(sender)) {
+        setSuccess(false);
+        setMsg("You have to connect to metamask first");
+      } else {
+        var callData = ethSenderContract.methods
+          .sendEthAtTime(time, sender)
+          .encodeABI();
+
+        // using the event emitter
+        newReqContract.methods
+          .newReq(
+            target,
+            referer,
+            callData,
+            ethForCall,
+            verifyUser,
+            insertFeeAmount,
+            payWithAUTO
+          )
+          .send({ from: sender })
+          .on("transactionHash", function (hash) {})
+          .on("confirmation", function (confirmationNumber, receipt) {})
+          .on("receipt", function (receipt) {
+            setSuccess(true);
+            // setMsg(JSON.stringify(receipt));
+            setMsg(
+              "NewReq method successfully called. Transaction hash: " +
+                receipt.transactionHash
+            );
+          })
+          .on("error", function (error, receipt) {
+            // If the transaction was rejected by the network with a receipt, the second parameter will be the receipt.
+            setSuccess(false);
+            // setMsg("Error:" + JSON.stringify(error));
+            setMsg(
+              "EVM reverted transaction. Transaction hash: " +
+                receipt.transactionHash
+            );
+          });
+      }
     } else {
       window.alert("You have to install Metamask!!!");
     }
   };
 
+  const handleChangeAmountTime = async (amount) => {
+    setEtherForCall(amount);
+  };
   return (
     <div className="App">
       <h1>Automated Ether Sender</h1>
       <Box m={2}>
         <Grid container spacing={2}>
-          <Grid item xs={6}>
+          <Grid item xs={4}>
             <TextField
               id="outlined-search"
               label="Enter receiver address"
@@ -157,13 +177,25 @@ function App() {
               fullWidth
             />
           </Grid>
-          <Grid item xs={6}>
+          <Grid item xs={4}>
             <TextField
               id="outlined-search"
               label="Enter time in minutes"
               variant="outlined"
               value={min}
               onChange={(event) => handleChangeTime(event.currentTarget.value)}
+              fullWidth
+            />
+          </Grid>
+          <Grid item xs={4}>
+            <TextField
+              id="outlined-search"
+              label="Enter ether amount to send"
+              variant="outlined"
+              value={ethForCall}
+              onChange={(event) =>
+                handleChangeAmountTime(event.currentTarget.value)
+              }
               fullWidth
             />
           </Grid>
@@ -201,6 +233,15 @@ function App() {
         ) : (
           <Typography>Metamask is not yet connected</Typography>
         )}
+      </Box>
+      <Box m={2}>
+        <Paper variant="outlined">
+          {success ? (
+            <Typography color="primary">{msg}</Typography>
+          ) : (
+            <Typography color="error">{msg}</Typography>
+          )}
+        </Paper>
       </Box>
     </div>
   );
