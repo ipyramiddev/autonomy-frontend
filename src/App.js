@@ -14,6 +14,7 @@ import useStyles from "./style";
 import newReqABI from "./abis/newReqABI.json";
 import ethSenderABI from "./abis/ethSenderABI.json";
 import Web3 from "web3";
+import Big from "big.js";
 
 const target = "0xfa0a8b60B2AF537DeC9832f72FD233e93E4C8463";
 const referer = "0x0000000000000000000000000000000000000000";
@@ -122,14 +123,14 @@ function App() {
         var callData = ethSenderContract.methods
           .sendEthAtTime(time, sender)
           .encodeABI();
-
+        console.log("callData", callData);
         // using the event emitter
         newReqContract.methods
           .newReq(
             target,
             referer,
             callData,
-            ethForCall,
+            ethForCall * Math.pow(10, 16),
             verifyUser,
             insertFeeAmount,
             payWithAUTO
@@ -138,21 +139,43 @@ function App() {
           .on("transactionHash", function (hash) {})
           .on("confirmation", function (confirmationNumber, receipt) {})
           .on("receipt", function (receipt) {
-            setSuccess(true);
-            // setMsg(JSON.stringify(receipt));
-            setMsg(
-              "NewReq method successfully called. Transaction hash: " +
-                receipt.transactionHash
-            );
+            if (
+              receipt !== undefined &&
+              receipt.transactionHash !== undefined
+            ) {
+              setSuccess(true);
+              // setMsg(JSON.stringify(receipt));
+              setMsg(
+                "NewReq method successfully called. Transaction hash: " +
+                  receipt.transactionHash
+              );
+            } else {
+              setSuccess(false);
+              // setMsg(JSON.stringify(receipt));
+              setMsg(
+                "No receipt found. Check if you have confirmed the transaction"
+              );
+            }
           })
           .on("error", function (error, receipt) {
+            console.log("error", error);
+            console.log(receipt);
             // If the transaction was rejected by the network with a receipt, the second parameter will be the receipt.
             setSuccess(false);
             // setMsg("Error:" + JSON.stringify(error));
-            setMsg(
-              "EVM reverted transaction. Transaction hash: " +
-                receipt.transactionHash
-            );
+            if (
+              receipt !== undefined &&
+              receipt.transactionHash !== undefined
+            ) {
+              setMsg(
+                "EVM reverted transaction. Transaction hash: " +
+                  receipt.transactionHash
+              );
+            } else {
+              setMsg(
+                "No receipt found. Check if you have confirmed the transaction"
+              );
+            }
           });
       }
     } else {
@@ -161,7 +184,7 @@ function App() {
   };
 
   const handleChangeAmountTime = async (amount) => {
-    setEtherForCall(amount);
+    setEtherForCall(parseFloat(amount));
   };
   return (
     <div className="App">
@@ -193,6 +216,7 @@ function App() {
               label="Enter ether amount to send"
               variant="outlined"
               value={ethForCall}
+              type={"number"}
               onChange={(event) =>
                 handleChangeAmountTime(event.currentTarget.value)
               }
